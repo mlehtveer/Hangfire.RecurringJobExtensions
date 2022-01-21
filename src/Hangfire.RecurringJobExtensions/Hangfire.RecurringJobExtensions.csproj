@@ -5,7 +5,7 @@
     <AssemblyTitle>Hangfire.RecurringJobExtensions</AssemblyTitle>
     <VersionPrefix>1.1.6</VersionPrefix>
     <Authors>icsharp</Authors>
-    <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3;net48</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>Hangfire.RecurringJobExtensions</AssemblyName>
@@ -22,14 +22,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hangfire.Core" Version="1.6.0" />
+    <PackageReference Include="Hangfire.Core" Version="1.7.28" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-	<PackageReference Include="System.IO.FileSystem.Watcher" Version="4.0.0" />
+	  <PackageReference Include="System.IO.FileSystem.Watcher" Version="4.3.0" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <PackageReference Include="Newtonsoft.Json" Version="5.0.1" />
   </ItemGroup>
 

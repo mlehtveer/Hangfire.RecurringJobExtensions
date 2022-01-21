@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using Hangfire.Common;
 using Hangfire.Storage;
 
@@ -62,7 +63,7 @@ namespace Hangfire.RecurringJobExtensions
 
 			if (string.IsNullOrEmpty(paramValue)) throw new Exception($"There is not RecurringJobId with associated BackgroundJob Id:{jobId}");
 
-			var recurringJobId = JobHelper.FromJson<string>(paramValue);
+			var recurringJobId = SerializationHelper.Deserialize<string>(paramValue);
 
 			return FindByRecurringJobId(recurringJobId);
 		}
@@ -88,8 +89,7 @@ namespace Hangfire.RecurringJobExtensions
 			if (string.IsNullOrEmpty(recurringJobId)) throw new ArgumentNullException(nameof(recurringJobId));
 			if (recurringJob == null) throw new ArgumentNullException(nameof(recurringJob));
 
-			var serializedJob = JobHelper.FromJson<InvocationData>(recurringJob["Job"]);
-			var job = serializedJob.Deserialize();
+			var job = InvocationData.DeserializePayload(recurringJob["Job"]).DeserializeJob();
 
 			return new RecurringJobInfo
 			{
@@ -100,11 +100,9 @@ namespace Hangfire.RecurringJobExtensions
 					: TimeZoneInfo.Utc,
 				Queue = recurringJob["Queue"],
 				Method = job.Method,
-				Enable = recurringJob.ContainsKey(nameof(RecurringJobInfo.Enable))
-					? JobHelper.FromJson<bool>(recurringJob[nameof(RecurringJobInfo.Enable)])
-					: true,
+				Enable = !recurringJob.ContainsKey(nameof(RecurringJobInfo.Enable)) || SerializationHelper.Deserialize<bool>(recurringJob[nameof(RecurringJobInfo.Enable)]),
 				JobData = recurringJob.ContainsKey(nameof(RecurringJobInfo.JobData))
-					? JobHelper.FromJson<Dictionary<string, object>>(recurringJob[nameof(RecurringJobInfo.JobData)])
+					? SerializationHelper.Deserialize<Dictionary<string, object>>(recurringJob[nameof(RecurringJobInfo.JobData)])
 					: null
 			};
 		}
@@ -117,14 +115,17 @@ namespace Hangfire.RecurringJobExtensions
 		{
 			if (recurringJobInfo == null) throw new ArgumentNullException(nameof(recurringJobInfo));
 
-			if (recurringJobInfo.JobData == null || recurringJobInfo.JobData.Count == 0) return;
+			if (recurringJobInfo.JobData == null /* || recurringJobInfo.JobData.Count == 0 */) return;
 
 			using (_connection.AcquireDistributedLock($"recurringjobextensions-jobdata:{recurringJobInfo.RecurringJobId}", LockTimeout))
 			{
 				var changedFields = new Dictionary<string, string>
 				{
-					[nameof(RecurringJobInfo.Enable)] = JobHelper.ToJson(recurringJobInfo.Enable),
-					[nameof(RecurringJobInfo.JobData)] = JobHelper.ToJson(recurringJobInfo.JobData)
+					[nameof(RecurringJobInfo.Enable)] = SerializationHelper.Serialize(recurringJobInfo.Enable),
+					[nameof(RecurringJobInfo.JobData)] = SerializationHelper.Serialize(recurringJobInfo.JobData),
+
+					[nameof(RecurringJobInfo.Queue)] = recurringJobInfo.Queue,
+					[nameof(RecurringJobInfo.Cron)] = recurringJobInfo.Cron
 				};
 
 				_connection.SetRangeInHash($"recurring-job:{recurringJobInfo.RecurringJobId}", changedFields);

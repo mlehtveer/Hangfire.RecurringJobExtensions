@@ -10,7 +10,14 @@ namespace Hangfire.RecurringJobExtensions
 	/// </summary>
 	public class RecurringJobInfo
 	{
-		/// <summary>
+        /// <summary>
+        /// ctor
+        /// </summary>
+        public RecurringJobInfo()
+        {
+            JobData = new Dictionary<string, object>();
+        }
+        /// <summary>
 		/// The identifier of the RecurringJob
 		/// </summary>
 		public string RecurringJobId { get; set; }
@@ -34,8 +41,7 @@ namespace Hangfire.RecurringJobExtensions
 		/// The <see cref="RecurringJob"/> data persisted in storage.  
 		/// </summary>
 		public IDictionary<string, object> JobData { get; set; }
-
-		/// <summary>
+        /// <summary>
 		/// Whether the <see cref="RecurringJob"/> can be added/updated,
 		/// default value is true, if false it will be deleted automatically.
 		/// </summary>
